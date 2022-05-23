@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class RoomUtils : MonoBehaviour {
-    private const int radius = 5;
-    private const int roomAmount = 50;
-    private const int roomAmountPreserved = 15;
+    private const int radius = 10;
+    private const int roomAmount = 100;
+    private const int roomAmountPreserved = 30;
     public List<GameObject> roomClones;
 
     private Vector2 GetRandomPointInCircle(int radius) {
@@ -21,9 +21,8 @@ public class RoomUtils : MonoBehaviour {
         Vector2 coords = GetRandomPointInCircle(radius);
         List<GameObject> rooms = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Templates>().rooms;
         int rand = UnityEngine.Random.Range(0, rooms.Count);
-        GameObject room = rooms[rand];
+        GameObject room = rooms[0];
         room.tag = "RoomClone";
-        //room.GetComponent<Rigidbody2D>().isKinematic = true;
         Instantiate(room, coords, Quaternion.identity);
     }
 
@@ -32,6 +31,22 @@ public class RoomUtils : MonoBehaviour {
 
         for(int i = 0; i < roomAmount; i++) {
             SpawnRoom();
+            yield return new WaitForSeconds(delay);
+        }
+        StartCoroutine(ResizeRooms(delay));
+    }
+
+    private IEnumerator ResizeRooms(float delay) {
+        Debug.Log("ResizeRooms couroutine started");
+
+        foreach(GameObject room in roomClones) {
+            Vector2 targetSize = new Vector2(Random.Range(1,10), Random.Range(1,10));
+            Mesh mesh = room.GetComponent<MeshFilter>().sharedMesh;
+            Bounds meshBounds = mesh.bounds;
+            Vector2 meshSize = meshBounds.size;
+            float xScale = targetSize.x / meshSize.x;
+            float yScale = targetSize.y / meshSize.y;
+            transform.localScale = new Vector2(xScale, yScale);
             yield return new WaitForSeconds(delay);
         }
         StartCoroutine(PushRooms(delay));
@@ -44,7 +59,7 @@ public class RoomUtils : MonoBehaviour {
         foreach(GameObject room in roomClones) {
             room.GetComponent<Rigidbody2D>().isKinematic = false;
         }
-        yield return new WaitForSeconds(10*delay);
+        yield return new WaitForSeconds(3);         // need to remove magic number later
         StartCoroutine(RemoveExcessRooms(delay));
     }
 
@@ -58,6 +73,20 @@ public class RoomUtils : MonoBehaviour {
             yield return new WaitForSeconds(delay);
         }
         StartCoroutine(LogRoomCoordinates(delay));
+        StartCoroutine(SpawnRoomContent(delay));
+    }
+
+    private IEnumerator SpawnRoomContent(float delay) {
+        Debug.Log("SpawnRoomContent couroutine started");
+
+        List<GameObject> nums = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Templates>().numbers;
+        foreach(GameObject num in nums) {
+            int rand = UnityEngine.Random.Range(0, roomClones.Count-1);
+            Vector2 coords = roomClones[rand].transform.position;
+            Instantiate(num, coords, Quaternion.identity);
+            yield return new WaitForSeconds(delay);
+        }
+        yield return null;
     }
 
     private IEnumerator LogRoomCoordinates(float delay) {
@@ -68,7 +97,7 @@ public class RoomUtils : MonoBehaviour {
         }
         yield return new WaitForSeconds(delay);
 
-        Delaunay delaunay = GameObject.Find("GenerationScripts").GetComponent<Delaunay>();
-        StartCoroutine(delaunay.Triangulate(roomClones, delay));
+        MapUtils map = GameObject.Find("GenerationScripts").GetComponent<MapUtils>();
+        StartCoroutine(map.DelaunayTriangulation(roomClones, delay));
     }
 }
