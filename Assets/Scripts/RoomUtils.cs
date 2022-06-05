@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,7 +28,7 @@ public class RoomUtils : MonoBehaviour {
     }
 
     public IEnumerator SpawnRoomsWithDelay(float delay) {
-        Debug.Log("SpawnRoomsWithDelay couroutine started");
+        Debug.Log("SpawnRoomsWithDelay coroutine started");
 
         for(int i = 0; i < roomAmount; i++) {
             SpawnRoom();
@@ -37,23 +38,25 @@ public class RoomUtils : MonoBehaviour {
     }
 
     private IEnumerator ResizeRooms(float delay) {
-        Debug.Log("ResizeRooms couroutine started");
+        Debug.Log("ResizeRooms coroutine started");
 
+        roomClones = new List<GameObject>(GameObject.FindGameObjectsWithTag("RoomClone"));
         foreach(GameObject room in roomClones) {
-            Vector2 targetSize = new Vector2(Random.Range(1,10), Random.Range(1,10));
-            Mesh mesh = room.GetComponent<MeshFilter>().sharedMesh;
-            Bounds meshBounds = mesh.bounds;
-            Vector2 meshSize = meshBounds.size;
-            float xScale = targetSize.x / meshSize.x;
-            float yScale = targetSize.y / meshSize.y;
-            transform.localScale = new Vector2(xScale, yScale);
+            Vector2 targetSize = new Vector2(UnityEngine.Random.Range(1,10), UnityEngine.Random.Range(1,10));
+            float x = room.transform.position.x;
+            float y = room.transform.position.y;
+            float xScale = targetSize.x;
+            float yScale = targetSize.y;
+            Debug.Log(String.Format("xScale {0}", xScale));
+            Debug.Log(String.Format("yScale {0}", yScale));
+            transform.localScale = new Vector2(x*xScale, y*yScale);
             yield return new WaitForSeconds(delay);
         }
         StartCoroutine(PushRooms(delay));
     }
 
     private IEnumerator PushRooms(float delay) {
-        Debug.Log("PushRooms couroutine started");
+        Debug.Log("PushRooms coroutine started");
 
         roomClones = new List<GameObject>(GameObject.FindGameObjectsWithTag("RoomClone"));
         foreach(GameObject room in roomClones) {
@@ -64,7 +67,7 @@ public class RoomUtils : MonoBehaviour {
     }
 
     private IEnumerator RemoveExcessRooms(float delay) {
-        Debug.Log("RemoveExcessRooms couroutine started");
+        Debug.Log("RemoveExcessRooms coroutine started");
 
         while(roomClones.Count > roomAmountPreserved) {
             int rand = UnityEngine.Random.Range(0, roomClones.Count-1);
@@ -77,7 +80,7 @@ public class RoomUtils : MonoBehaviour {
     }
 
     private IEnumerator SpawnRoomContent(float delay) {
-        Debug.Log("SpawnRoomContent couroutine started");
+        Debug.Log("SpawnRoomContent coroutine started");
 
         List<GameObject> nums = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Templates>().numbers;
         foreach(GameObject num in nums) {

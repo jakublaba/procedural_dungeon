@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class Controller : MonoBehaviour {
-    private const float delay = 0.01f;
+    private const float delay = 0.03f;
     private RoomUtils roomUtils;
 
     void Start() {
