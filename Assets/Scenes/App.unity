@@ -192,8 +192,8 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420035}
-  - component: {fileID: 519420033}
   - component: {fileID: 519420036}
+  - component: {fileID: 519420037}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -228,7 +228,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 14.9353695
+  orthographic size: 19.874395
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -260,26 +260,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &519420033
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 519420028}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2de6ab38c6de84c47af5290cf88ade1c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  rooms:
-  - {fileID: 6937273795896552859, guid: 91d44dd962510c04486552495e04894b, type: 3}
-  - {fileID: 6846094670190623887, guid: fd79b63d0c5ae294981c5bb5baffb41a, type: 3}
-  - {fileID: 5339476450011735676, guid: fe8f821510176cb4f838e183c3de9083, type: 3}
-  numbers:
-  - {fileID: 4463360320112907537, guid: 9b5044c4dcf6ff24489f995c92b0362b, type: 3}
-  - {fileID: 3708688436576144749, guid: 0aacf289ae5aea84d90bbad13b828854, type: 3}
-  - {fileID: 1909535919371387985, guid: e5920e885eb23d840be5379cd0338b1d, type: 3}
 --- !u!114 &519420035
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -304,3 +284,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95d3671736472f64d896182bf9ca2ba6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &519420037
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2de6ab38c6de84c47af5290cf88ade1c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  monsters:
+  - {fileID: 3821617463102095693, guid: 4c1b3e0afa81cb74599ca287d107323f, type: 3}
+  - {fileID: 3740382024647699443, guid: abc7250d2562d10429c8194e4498b395, type: 3}
+  - {fileID: 4646046653744598458, guid: 27c665887d851334f9edbffe1678ad25, type: 3}
+  - {fileID: 2704712171687228954, guid: a75eb5a52d8cdd647b047b3e42792b86, type: 3}
+  roomContents:
+  - {fileID: 2158754596834967990, guid: b672ca50a8d50314ca32022fd9bff080, type: 3}
+  - {fileID: 1805895899789232860, guid: 2f491083a08fd9442be3982b7e3793e0, type: 3}
+  - {fileID: 6344013860429358257, guid: be26108280d117142896ef04f015b6a2, type: 3}
+  - {fileID: 8426656636813794247, guid: 457778e9c0661d44b8739e8af253edb7, type: 3}

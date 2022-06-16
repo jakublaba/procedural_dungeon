@@ -3,104 +3,145 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class RoomUtils : MonoBehaviour {
-    private const int radius = 10;
-    private const int roomAmount = 100;
-    private const int roomAmountPreserved = 30;
+public class RoomUtils : MonoBehaviour
+{
+    private const int mapRadius = 10;
+    private const float roomRadius = 3;
+    private const int roomAmount = 50;
+    private const int roomAmountPreserved = 10;
+    private MapUtils map;
     public List<GameObject> roomClones;
 
-    private Vector2 GetRandomPointInCircle(int radius) {
+    private Vector2 RandomPointInCircle()
+    {
         int seed = (int)System.DateTime.Now.Ticks;
         UnityEngine.Random.InitState(seed);
-        float t = 2*Mathf.PI*UnityEngine.Random.value;
+        float angle = 2*Mathf.PI*UnityEngine.Random.value;
         float u = 2*UnityEngine.Random.value;
         float r = u > 1 ? 2-u : u;
-        return new Vector2(radius*r*Mathf.Cos(t), radius*r*Mathf.Sin(t));
+
+        float x = mapRadius*r*Mathf.Cos(angle);
+        float y = mapRadius*r*Mathf.Sin(angle);
+        return new Vector2(x, y);
     }
 
-    private void SpawnRoom() {
-        Vector2 coords = GetRandomPointInCircle(radius);
-        List<GameObject> rooms = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Templates>().rooms;
-        int rand = UnityEngine.Random.Range(0, rooms.Count);
-        GameObject room = rooms[0];
+    private void SpawnPolygonRoom()
+    {
+        Vector2 center = RandomPointInCircle();
+        int nSides = 4;
+        List<Vector2> pVertices = ValtrPolygons.RandomConvexPolygon(nSides, roomRadius);
+    
+        GameObject room = new GameObject();
         room.tag = "RoomClone";
-        Instantiate(room, coords, Quaternion.identity);
+        room.transform.position = center;
+
+        room.AddComponent<Rigidbody2D>();
+        room.AddComponent<PolygonCollider2D>();
+        Rigidbody2D roomBody = room.GetComponent<Rigidbody2D>();
+        PolygonCollider2D roomCollider = room.GetComponent<PolygonCollider2D>();
+        roomBody.freezeRotation = true;
+        roomBody.isKinematic = true;
+        roomCollider.pathCount = nSides;
+        roomCollider.points = pVertices.ToArray();
     }
 
-    public IEnumerator SpawnRoomsWithDelay(float delay) {
+    private void DrawRoom(GameObject room)
+    {
+        Vector2 shift = room.transform.position;
+        List<Vector2> pVertices = new List<Vector2>(room.GetComponent<PolygonCollider2D>().points);
+        int nSides = pVertices.Count;
+        room.AddComponent<LineRenderer>();
+        LineRenderer roomRenderer = room.GetComponent<LineRenderer>();
+        roomRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        roomRenderer.startColor = Color.black;
+        roomRenderer.endColor = Color.black;
+        roomRenderer.startWidth = 0.08f;
+        roomRenderer.endWidth = 0.08f;
+        roomRenderer.positionCount = nSides;
+        for(int i=0; i<nSides; i++)
+        {
+            Vector2 polygonPoint = pVertices[i];
+            Vector2 actualPosition = new Vector2(polygonPoint.x+shift.x, polygonPoint.y+shift.y);
+            roomRenderer.SetPosition(i, actualPosition);
+        }
+        roomRenderer.loop = true;
+    }
+
+    public IEnumerator SpawnRoomsWithDelay()
+    {
         Debug.Log("SpawnRoomsWithDelay coroutine started");
 
-        for(int i = 0; i < roomAmount; i++) {
-            SpawnRoom();
-            yield return new WaitForSeconds(delay);
+        map = GameObject.Find("GenerationScripts").GetComponent<MapUtils>();
+        for(int i = 0; i < roomAmount; i++)
+        {
+            SpawnPolygonRoom();
         }
-        StartCoroutine(ResizeRooms(delay));
+
+        yield return new WaitForSeconds(Controller.delay);
+        StartCoroutine(PushRooms());
     }
 
-    private IEnumerator ResizeRooms(float delay) {
-        Debug.Log("ResizeRooms coroutine started");
-
-        roomClones = new List<GameObject>(GameObject.FindGameObjectsWithTag("RoomClone"));
-        foreach(GameObject room in roomClones) {
-            Vector2 targetSize = new Vector2(UnityEngine.Random.Range(1,10), UnityEngine.Random.Range(1,10));
-            float x = room.transform.position.x;
-            float y = room.transform.position.y;
-            float xScale = targetSize.x;
-            float yScale = targetSize.y;
-            Debug.Log(String.Format("xScale {0}", xScale));
-            Debug.Log(String.Format("yScale {0}", yScale));
-            transform.localScale = new Vector2(x*xScale, y*yScale);
-            yield return new WaitForSeconds(delay);
-        }
-        StartCoroutine(PushRooms(delay));
-    }
-
-    private IEnumerator PushRooms(float delay) {
+    private IEnumerator PushRooms()
+    {
         Debug.Log("PushRooms coroutine started");
 
         roomClones = new List<GameObject>(GameObject.FindGameObjectsWithTag("RoomClone"));
-        foreach(GameObject room in roomClones) {
+        Debug.Log(roomClones.Count);
+        foreach(GameObject room in roomClones)
+        {
             room.GetComponent<Rigidbody2D>().isKinematic = false;
         }
-        yield return new WaitForSeconds(3);         // need to remove magic number later
-        StartCoroutine(RemoveExcessRooms(delay));
+
+        yield return new WaitForSeconds(Controller.delay*roomAmount);
+        StartCoroutine(RemoveExcessRooms());
     }
 
-    private IEnumerator RemoveExcessRooms(float delay) {
+    private IEnumerator RemoveExcessRooms()
+    {
         Debug.Log("RemoveExcessRooms coroutine started");
 
-        while(roomClones.Count > roomAmountPreserved) {
+        while(roomClones.Count > roomAmountPreserved)
+        {
             int rand = UnityEngine.Random.Range(0, roomClones.Count-1);
             GameObject.Destroy(roomClones[rand]);
             roomClones.RemoveAt(rand);
-            yield return new WaitForSeconds(delay);
         }
-        StartCoroutine(LogRoomCoordinates(delay));
-        StartCoroutine(SpawnRoomContent(delay));
+
+        yield return new WaitForSeconds(Controller.delay);
+        StartCoroutine(DrawRooms());
     }
 
-    private IEnumerator SpawnRoomContent(float delay) {
-        Debug.Log("SpawnRoomContent coroutine started");
+    private IEnumerator DrawRooms()
+    {
+        Debug.Log("DrawRooms coroutine started");
 
-        List<GameObject> nums = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Templates>().numbers;
-        foreach(GameObject num in nums) {
-            int rand = UnityEngine.Random.Range(0, roomClones.Count-1);
-            Vector2 coords = roomClones[rand].transform.position;
-            Instantiate(num, coords, Quaternion.identity);
-            yield return new WaitForSeconds(delay);
+        foreach(GameObject room in roomClones)
+        {
+            DrawRoom(room);
         }
-        yield return null;
+
+        yield return new WaitForSeconds(Controller.delay);
+        StartCoroutine(CorrectRoomCoordinates());
     }
 
-    private IEnumerator LogRoomCoordinates(float delay) {
-        Debug.Log("Room coordinates:");
-        
-        foreach(GameObject room in roomClones) {
-            Debug.Log(System.String.Format("({0},{1})", room.transform.position.x, room.transform.position.y));
-        }
-        yield return new WaitForSeconds(delay);
+    private IEnumerator CorrectRoomCoordinates()
+    {
+        Debug.Log("CorrectRoomCoordinates coroutine started");
 
-        MapUtils map = GameObject.Find("GenerationScripts").GetComponent<MapUtils>();
-        StartCoroutine(map.DelaunayTriangulation(roomClones, delay));
+        foreach(GameObject room in roomClones)
+        {
+            List<Vector2> points = new List<Vector2>(room.GetComponent<PolygonCollider2D>().points);
+            List<Vector2> actualPoints = new List<Vector2>(points.Count);
+            Vector2 shift = room.transform.position;
+
+            for(int i=0; i<points.Count; i++)
+            {
+                actualPoints.Add(new Vector2(points[i].x+shift.x, points[i].y+shift.y));
+            }
+        }
+
+        yield return new WaitForSeconds(Controller.delay);
+        StartCoroutine(map.DelaunayTriangulation(roomClones));
     }
+
 }
